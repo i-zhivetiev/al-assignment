@@ -1,11 +1,20 @@
 # coding: utf-8
+"""
+Модуль содержит классы и инструменты, для работы
+с сообщениями, которыми обмениваются процессы.
+"""
 import struct
 import uuid
 
+LEN = 17
+
 
 class Message(object):
+    """Базовый класс сообщения."""
     header = None
     fmt = None
+
+    __slots__ = []
 
     def encode(self):
         raise NotImplementedError
@@ -16,39 +25,53 @@ class Message(object):
 
 
 class MessageError(Exception):
-    """
-    """
+    """Базовый класс ошибок, связанных с Message."""
 
 
 class MessageDecodeError(MessageError):
-    """
-    """
+    """Ошибка декодирования сообщения."""
 
 
 class Task(Message):
-    """
-    >>> task = Task()
-    >>> msg = task.encode()
-    >>> decoded_task = Task.decode(msg)
-    >>> isinstance(decoded_task, Task)
-    True
-    >>> task.task_id == decoded_task.task_id
-    True
-    """
+    """Сообщение с задачей на вычисление."""
     header = 0x01
     fmt = '>B16s'
 
+    __slots__ = ['task_id']
+
     def __init__(self, task_id=None):
+        """Создать экземпляр Задачи.
+
+        :param task_id:
+            `uuid`|None, идентификатор задачи, по умолчанию генерируется UUID1.
+
+        :returns:
+            `Task`, экземпляр задачи.
+        """
         if task_id is None:
             self.task_id = uuid.uuid1()
         else:
             self.task_id = task_id
 
     def encode(self):
+        """Закодировать задачу в двоичную строку, пригодную для передачи
+         и вернуть результат.
+
+        :returns:
+            `bytes`, закодированное сообщение.
+        """
         return struct.pack(self.fmt, self.header, self.task_id.bytes)
 
     @classmethod
     def decode(cls, msg):
+        """Декодировать сообщение `msg` и вернуть экземпляр `Task`.
+
+        :param msg:
+            `bytes`, двоичная строка с сообщением.
+
+        :returns:
+            `Task`, экземпляр задачи.
+        """
         header, task_id = struct.unpack(cls.fmt, msg)
         task_id = uuid.UUID(bytes=task_id)
         if header != cls.header:
@@ -57,45 +80,59 @@ class Task(Message):
 
 
 class Result(Task):
-    """
-    >>> task = Task()
-    >>> result = Result(task.task_id)
-    >>> msg = result.encode()
-    >>> decoded_result = Result.decode(msg)
-    >>> isinstance(decoded_result, Result)
-    True
-    >>> decoded_result.task_id == task.task_id
-    True
+    """Сообщение с результатом выполнения задачи.
+
+    Идентичен родительскому классу с одним отличием:
+    параметр конструктора `task_id` является обязательным.
     """
     header = 0x10
 
+    __slots__ = ['task_id']
+
     def __init__(self, task_id):
+        """Создать экземпляр Result.
+
+        :param task_id:
+            `uuid`, идентификатор задачи, с которым связан результат.
+
+        :returns:
+            `Result`
+        """
         super(Result, self).__init__(task_id)
 
 
 class Ping(Message):
-    """
-    >>> ping = Ping()
-    >>> msg = ping.encode()
-    >>> decoded_ping = Ping.decode(msg)
-    >>> isinstance(decoded_ping, Ping)
-    True
-    """
+    """Сообщение для авто-теста."""
     header = 0x11
     fmt = '>B'
 
+    __slots__ = []
+
     def encode(self):
+        """Закодировать пинг в двоичную строку, пригодную для передачи
+        и вернуть результат.
+
+        :returns:
+            `bytes`, закодированное сообщение.
+        """
         return struct.pack(self.fmt, self.header)
 
     @classmethod
     def decode(cls, msg):
+        """Декодировать сообщение `msg` и вернуть экземпляр `Ping`.
+
+        :param msg:
+            `bytes`, двоичная строка с сообщением.
+
+        :returns:
+            `Ping`, экземпляр.
+        """
         (header,) = struct.unpack(cls.fmt, msg)
         if header != cls.header:
             raise MessageDecodeError('Unknown header: %s' % header)
         return cls()
 
 
-# TODO: сделать заполнение автоматом с помощью Abs
 KNOWN_HEADERS = {
     0x01: Task,
     0x10: Result,
@@ -104,25 +141,31 @@ KNOWN_HEADERS = {
 
 
 def decode(msg):
+    """Декодировать сообщение `msg` и вернуть экземпляр соответствующего
+    класса.
+
+    :param msg:
+        `bytes`, двоичная строка.
+
+    :returns:
+        `Message`, соответствующий наследник Message.
     """
-    >>> task = Task()
-    >>> msg = task.encode()
-    >>> item = decode(msg)
-    >>> isinstance(item, Task)
-    True
-    >>> result = Result(task.task_id)
-    >>> msg = result.encode()
-    >>> item = decode(msg)
-    >>> isinstance(item, Result)
-    True
-    >>> ping = Ping()
-    >>> msg = ping.encode()
-    >>> item = decode(msg)
-    >>> isinstance(item, Ping)
-    True
-    """
-    (header,) = struct.unpack('>B', msg[0])
+    header = msg[0]
+    if not isinstance(header, int):
+        (header,) = struct.unpack('>B', header)
     if header not in KNOWN_HEADERS:
         raise MessageDecodeError("Unknown message")
     decoder = KNOWN_HEADERS[header]
     return decoder.decode(msg)
+
+
+def is_ping(msg):
+    return isinstance(msg, Ping)
+
+
+def is_result(msg):
+    return isinstance(msg, Result)
+
+
+def is_task(msg):
+    return isinstance(msg, Task)

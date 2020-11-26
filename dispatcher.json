@@ -1,0 +1,9 @@
+{
+  "server": {
+    "port": 9000,
+    "worker_timeout": 10
+  },
+  "logging": {
+    "level": "DEBUG"
+  }
+}

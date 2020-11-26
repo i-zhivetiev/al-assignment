@@ -1,0 +1,17 @@
+{
+  "server": {
+    "port": 8000,
+    "ping_interval": 10,
+    "min_calculation_period": 0,
+    "max_calculation_period": 5,
+    "breaking_probability": 0.3,
+    "gray_out_period": 5
+  },
+  "client": {
+    "host": "localhost",
+    "port": 9000
+  },
+  "logging": {
+    "level": "DEBUG"
+  }
+}

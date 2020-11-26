@@ -1,0 +1,15 @@
+{
+  "server": {
+    "port": 7000,
+    "min_send_task_period": 0,
+    "max_send_task_period": 5,
+    "request_timeout": 30
+  },
+  "worker": {
+    "host": "localhost",
+    "port": 9000
+  },
+  "logging": {
+    "level": "DEBUG"
+  }
+}
