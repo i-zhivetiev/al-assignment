@@ -13,8 +13,8 @@
 
 Создать клон репозитория.
 ```
-$ git clone ...
-$ cd ...
+$ git clone https://github.com/i-zhivetiev/al-assignment.git
+$ cd al-assignment
 ```
 
 Запустить удобным способом. Например, с помощью виртуального окружения или
