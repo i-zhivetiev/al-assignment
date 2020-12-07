@@ -25,13 +25,13 @@ $ cd al-assignment
 Создать виртуальное окружение:
 ```
 $ virtualenv -p <path-to-python> ./venv
-$ source .venv/bin/acitvate
-$ pip install ./al-assignment
+$ source ./venv/bin/activate
+$ pip install ./
 ```
 
 Запустить нужный процесс. Например, процесс клиента:
 ```
-$ python -m al_assignment.client -c <path-to-client.json>
+$ python -m al_assignment.client [-c path-to-client.json]
 ```
 
 ### Директория пакета
